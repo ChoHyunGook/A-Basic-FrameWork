@@ -3,13 +3,13 @@ import morgan from 'morgan'
 import dotenv from "dotenv";
 import applyDotenv from "./Lambdas/applyDotenv";
 import ResponseService from "./Lambdas/response";
-import db from  './DataBase/index.js'
+import db from  './DataBase/database.js'
 import basic from './app/routes/router.js'
 
 async function startServer(){
     dotenv.config()
     const app =express()
-    const {mongoUri ,port, DB_NAME } = applyDotenv(dotenv)
+    const {port,AWS_TABLE_USER } = applyDotenv(dotenv)
 
     //post 방식 일경우 begin
     //post 의 방식은 url 에 추가하는 방식이 아니고 body 라는 곳에 추가하여 전송하는 방식
@@ -19,20 +19,14 @@ async function startServer(){
 
 
 
-
-    // 몽고디비 전용 EXPRESS 몽구스
-    //DB 연결 확인
-    db.mongoose.set('strictQuery', false);
-    db
-        .mongoose
-        .connect(mongoUri,{dbName:DB_NAME})
-        .then(() => {
-            console.log(' ### 몽고DB 연결 성공 ### ')
-        })
-        .catch(err => {
-            console.log(' 몽고DB와 연결 실패', err)
-            process.exit();
-        });
+    //DynamoDB 연결확인
+    db.scan({TableName:AWS_TABLE_USER},(err,data)=>{
+        if(err){
+            console.log('### AWS DynamoDB Connect Fail... ###')
+        }else {
+            console.log('### AWS DynamoDB Connect Success ###',data)
+        }
+    })
 
 
     app.use('/basic',basic)
